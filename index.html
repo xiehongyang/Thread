@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Threading in C#(translation)</title>
+    <link href="css/public.css" rel="stylesheet"/>
+    <style>
+        body {
+            background-color: #cccccc;
+        }
+
+        .chapter_one {
+            position: absolute;
+            left: 30%;
+            top: 2%;
+            line-height: 33px;
+        }
+
+        h1 {
+            font-size: xx-large;
+            font-weight: bolder;
+            padding-top: 3px;
+            padding-left: 250px;
+        }
+
+        h2 {
+            color: #008080;
+            font-weight: bold;
+            font-size: xx-large;
+        }
+
+        .title {
+            border: 2px solid #000;
+            width: 724px;
+            height: 44px;
+            margin-left: 50px;
+            margin-top: 19px;
+        }
+
+        .subtitle {
+            border-bottom: 2px solid #008080;
+            margin-top: 59px;
+            margin-left: 54px;
+            width: 719px;
+        }
+
+        .part {
+            background-color: white;
+            width: 820px;
+            height: 1145px;
+            box-shadow: 0 0 1px #000;
+            padding-top: 8px;
+        }
+
+        .part + .part {
+            margin-top: 20px;
+        }
+
+        .content {
+            width: 700px;
+            margin-left: 54px;
+        }
+
+        .footer {
+            font-family: -webkit-pictograph;
+            line-height: 1;
+            font-size: small;
+            border-top: 1px solid #000;
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+
+        .footer a {
+            text-decoration: none;
+            color: #5BA1DA;
+        }
+
+        .footer_num {
+            float: right;
+            font-style: normal;
+            font-size: initial;
+        }
+
+        .content_inside_frame {
+            border: 2px solid #008080;
+            padding-left: 11px;
+        }
+
+        .content_inside_sec_frame {
+            border: 6px double #C0504D;
+            padding-left: 11px;
+        }
+
+        .sub_subtitle {
+            font-size: x-large;
+            color: #008080;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div class="chapter_one">
+    <div class="part">
+        <div class="title">
+            <h1>第一部分:开始</h1>
+        </div>
+        <div class="subtitle">
+            <h2>简介和概念</h2>
+        </div>
+        <div class="content">
+            C#支持代码通过多线程的并行执行。一个线程是一个独立的执行路径，能够同时和其他线程一起跑。</br>
+            一个C#客户端项目(Console控制台，WPF，或者Windows
+            Forms)刚开始在一个由CLR和操作系统("main"方法)自动创造的单线程和被制造的多线程(创造一个额外线程)里运行。这里是一个简单的例子和它的输出。
+            <div class="content_inside_frame">
+                所有例子假设引用了如下的命名空间:
+                <br>
+                using System;
+                <br>
+                using System.Threading;
+            </div>
+            <img src="image/example1.png"/>
+            <br>
+            主线程创建了个新的线程t并执行了一个重复打印字符"y"的方法,同时，主线程重复打印字符"x".这里是输出.
+            <br>
+            <img src="image/example2.png"/>
+            <img src="image/example3.png"/>
+            <br>
+            一旦启动，直到这个线程结束,线程的IsAlive属性返回true,当委托传递给线程的构造器完成执行，这个线程就结束了。一旦结束，线程不能重启。
+            <br>
+
+            <div class="footer">© 2006-2010 Joseph Albahari, O’Reilly Media, Inc. All rights reserved. <a
+                    href="http://www.albahari.com/threading">www.albahari.com/threading/</a>
+
+                <div class="footer_num">1</div>
+            </div>
+        </div>
+    </div>
+    <div class="part">
+        <div class="content">
+            CLR分配给每个线程它自己的内存栈所以每个本地变量可以保持分离，在下一个例子中，我们用一个本地变量来定义方法，然后在主线程和新线程中同时执行这个方法:
+            <br/>
+            <img src="image/example4.png"/>
+            <br/>
+            一个被周期的分离拷贝的变量被创建在每个线程的内存栈上，所以这个输出是，可预言的，十个问号。
+            <br>
+            线程共享数据如果他们和一个相同的对象实例有共同的联系。例如:
+            <br>
+            <img src="image/example5.png"/>
+            <br>
+            因为俩个线程都用了Go()方法在同一个ThreadTest实例上，他们共享done领域.这个结果是"Done"被打印一次而不是俩次:
+            <br>
+            <img src="image/example6.png"/>
+            <br>
+            静态域提供了其他方法分享数据在不同的线程中,这里有一个done作为静态域的相同的例子
+            <br>
+            <img src="image/example7.png"/>
+            <br>
+            俩个例子都说明了其他关键概念:就是线程安全(或更甚，缺少它!)。这个输出事实上是不太确定的:确实有可能(尽管不太可能)"Done"被打印2次.然而，我们在Go方法中交换了声明的顺序,"Done"被打印俩次的几率就戏剧性的升上来了。
+            <br>
+
+            <div class="footer">© 2006-2010 Joseph Albahari, O’Reilly Media, Inc. All rights reserved. <a
+                    href="http://www.albahari.com/threading">www.albahari.com/threading/</a>
+
+                <div class="footer_num">2</div>
+            </div>
+        </div>
+    </div>
+    <div class="part">
+        <div class="content">
+            <img src="image/example8.png"/>
+            <br>
+            问题就在于一个线程能被评价如果if声明在其他线程正在执行的WriteLine声明的右边，在他将设置done到true
+            <br>
+            补救措施就是当读写公共域时获得一个唯一锁。为此，C#提供了锁声明：
+            <br>
+            <img src="image/example9.png"/>
+            <br>
+            当俩个线程同时竞争一个锁并其中之一得到时(这里是locker),没有拿到锁的线程等待，或被阻塞，直到锁变得可用。在这里，它确信在每次只有一个线程可以进入关键的代码区，和"Done"将会只打印一次。代码会被保护起来用这种方式——从不确定性的多线程环境中，我们称之为线程安全。
+            <br>
+
+            <div class="content_inside_sec_frame">
+                共享数据时多线程出现模糊的错误和具有复杂性的主要原因，虽然大多很必要，但是要尽量保持简单。
+            </div>
+            当一个线程阻塞时，并不会消耗CPU资源。
+            <br>
+
+            <div class="sub_subtitle">Join和Sleep</div>
+            你可以等待其他线程结束通过调用Join方法,例如:
+            <img src="image/example10.png"/>
+            <br>
+            这里会打印"y"1000次,紧接着一个"Thread t has
+            ended"会立刻出现在底部。你可以包含一个timeout当调用Join时,要么是毫秒或者TimeSpan。如果线程结束会返回true或者超时返回false。
+            <div class="footer">© 2006-2010 Joseph Albahari, O’Reilly Media, Inc. All rights reserved. <a
+                    href="http://www.albahari.com/threading">www.albahari.com/threading/</a>
+
+                <div class="footer_num">3</div>
+            </div>
+        </div>
+    </div>
+    <div class="part">
+        <div class="content">
+            Thread.Sleep会暂停当前的线程一段指定的时间
+            <br>
+            <img src="image/example11.png"/>
+            <br>
+            当等待Sleep或Join时，一个线程会被阻塞并且不会消耗CPU资源
+            <div class="content_inside_frame">
+                Thread.Sleep(0)会立刻放弃当前线程的时间片，自愿交出CPU资源供给其它线程。.NET4.0版本的新Thread.Yield()方法做了同样的事情——除了放弃仅仅是为了让其它线程都在同一处理器上运行。
+                <br>
+                Sleep(0)或者Yield偶尔用在运行代码中为了高级性能的调整。它还是一个出色的诊断工具为了帮助找到线程的未知安全问题:如果在你的代码任意地方插入Thread.Yield()会中断整个项目的话，你差不多可以确信那有个bug。
+            </div>
+            <br>
+
+            <div class="sub_subtitle">线程如何工作</div>
+            多线程被线程调度器(一个被CLR通常托管在操作系统中)内部的管理。一个线程调度器确认所有活动线程被适当分配执行时间，然后令那些等待的或被阻塞的线程（例如:在一个排它锁或者用户输入时）不会占用CPU时间。
+            <br>
+            在一个单处理器计算机上，一个线程调度器执行时间片——迅速的转换每个活动线程的执行。在Windows操作系统下，一个时间片通常在十分之一毫秒区间，事实上远大于CPU在一个线程和其他线程之间转换环境的开销(通常只有几毫秒的区间)。
+            <br>
+            在一个多处理器的计算机上，多线程被混合时间片和真实并发共同执行，不同的线程运行代码同步的在不同的CPU上，可以确信仍然会有很多时间片，因为操作系统需要服务他自己的线程，也有那些其他应用程序。
+            <br>
+            一个线程被认为是被先占有的当执行被打断因为外部因素像时间片。在大多情况下，一个线程当它被占用时，是不能被控制的。
+            <br>
+
+            <div class="sub_subtitle">线程vs进程</div>
+            一个线程类似于操作系统的程序的进程。仅仅像进程同步的运行在计算机上，
+            线程同步的运行在单个进程上。进程被完全平分，线程隔离程度是有限的。尤其，线程和其他线程共享内存在同一个应用中。这里，在某种程度上，就是为什么线程很有用的原因:一个线程可以在背后抓取数据，例如，当很多线程到达时可以显示数据。
+            <div class="footer">© 2006-2010 Joseph Albahari, O’Reilly Media, Inc. All rights reserved. <a
+                    href="http://www.albahari.com/threading">www.albahari.com/threading/</a>
+
+                <div class="footer_num">4</div>
+            </div>
+        </div>
+    </div>
+    <div class="part" style="height:1500px;">
+        <div class="content">
+            <br>
+
+            <div class="sub_subtitle">线程的用处和滥用</div>
+            多线程有很多用处，以下是最常见的：
+            <br>
+            <b>保持一个响应的用户界面</b>
+            <br>
+            &nbsp;&nbsp;通过运行时间-消耗任务在一个同步“工作者”线程，主要的UI线程可以任意继续处理键盘和鼠标事件。
+
+            <br>
+            <b>有效的利用其它被锁住的CPU</b>
+            <br>
+            &nbsp;&nbsp;多线程是非常有用的当一个线程等待其他计算机或者硬件。当一个线程被锁住并执行任务时，其他线程可以利用其它无负担的计算机。
+
+            <br>
+            <b>并行设计</b>
+            <br>
+            &nbsp;&nbsp;代码可以被执行的较集中，执行的更快在多核或者多进程计算机上，如果工作量被几个线程共享也就是利用了“分而治之”的思想。
+
+            <br>
+            <b>投机执行</b>
+            <br>
+            &nbsp;&nbsp;在多核机器上，你能时而提高性能通过预测有些事可能需要去完成，从而提前做他。LINQPad用了这种技术从而加速了新查询的建立。一个变化同步的运行一组不同的算法从而解决同一个任务。无论哪一个完成第一个“胜利”——这是很有效的当你提前不知道哪种算法会执行的更快时。
+
+            <br>
+            <b>考虑请求被同时执行</b>
+            <br>
+            &nbsp;&nbsp;在一个服务器上，客户请求能够同时到达并且需要被同步处理(.NET架构创造了一个自动的方法如果你用的是ASP.NET,Web
+            Services,或Remoting)。这也用于客户端上（例如,处理点对点网络或者甚至用户的多请求）。
+            <br>
+            <br>
+            像ASP.NET和WCF的技术，你可能不知道多线程甚至会发生——除非你访问到了共享数据（或许通过静态域）并且没有适当的锁机制，这会和线程安全相冲突。
+            <br>
+            线程也有附加条件。最大的附加条件就是多线程可能增加到非常复杂。拥有很多线程本身不会制造复杂性。不同的线程之间的交互(通常是通过共享数据)反而会产生。这个应用于无论交互是否是故意的，并且会造成很长的运行周期和容易持续的生成bug。为此，保持线程之间最小的交互并且尽可能的坚持的简化和运用久经考虑的设计无论什么情况下都是值得的。这篇文章很大程度上仅仅聚焦于处理这些复杂情况，删去交互然而也没什么可说的了。
+            <div class="content_inside_frame">
+                一个好的策略就是将多线程逻辑压缩到可用的类中，然后类可以被独立的检查和测试。Framework自己本身提供了许多更高层次的线程构造器，我们稍后会涉及到
+            </div>
+            <br>
+            线程也引发了资源和CPU的消耗在线程调度和线程转化中(当活动线程数大于CPU核心数时)并且也有创建和销毁的消耗。多线程将不会总能加速你的应用——他甚至能减慢如果你过度或者不适当的用它的话。例如，涉及到繁重的磁盘输入/输出,多个线程按顺序执行任务比10个线程同时执行更快(在Wiat和Pulse俩个信号中，我们描述如何实现生产者/消费者队列，它正好提供了这种功能。)
+        </div>
+        <div class="subtitle">
+            <h2>创建和开启一个线程</h2>
+        </div>
+        <br>
+        <div class="content">
+        正如我们在介绍中看到的，用Thread类的构造器来创建线程，通过一个ThreadStart委托表明哪个应该执行。这里是ThreadStart委托如何定义的:
+        <br>
+        <img src="image/example11.png"/>
+            <br>
+        调用Start在线程上然后设置它为运行。这个线程一直运行到方法返回，其中标记着线程的结束。这有个例子，用了C#语法的扩展创建了ThreadStart委托:
+            <div class="footer">© 2006-2010 Joseph Albahari, O’Reilly Media, Inc. All rights reserved. <a
+                    href="http://www.albahari.com/threading">www.albahari.com/threading/</a>
+
+                <div class="footer_num">5</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>
