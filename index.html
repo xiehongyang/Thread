@@ -277,12 +277,13 @@
             <h2>创建和开启一个线程</h2>
         </div>
         <br>
+
         <div class="content">
-        正如我们在介绍中看到的，用Thread类的构造器来创建线程，通过一个ThreadStart委托表明哪个应该执行。这里是ThreadStart委托如何定义的:
-        <br>
-        <img src="image/example11.png"/>
+            正如我们在介绍中看到的，用Thread类的构造器来创建线程，通过一个ThreadStart委托表明哪个应该执行。这里是ThreadStart委托如何定义的:
             <br>
-        调用Start在线程上然后设置它为运行。这个线程一直运行到方法返回，其中标记着线程的结束。这有个例子，用了C#语法的扩展创建了ThreadStart委托:
+            <img src="image/example12.png"/>
+            <br>
+            调用Start在线程上然后设置它为运行。这个线程一直运行到方法返回，其中标记着线程的结束。这有个例子，用C#语法的扩展创建了ThreadStart委托:
             <div class="footer">© 2006-2010 Joseph Albahari, O’Reilly Media, Inc. All rights reserved. <a
                     href="http://www.albahari.com/threading">www.albahari.com/threading/</a>
 
@@ -290,7 +291,86 @@
             </div>
         </div>
     </div>
+    <div class="part">
+        <div class="content">
+            <br>
+            <img src="image/example13.png"/>
+            <br>
+            在这个例子中，线程t执行Go()，同时(几乎)主线程调用Go()。结果就是俩个hello！。
+            <br>
+            一个线程可以被更便捷的创建仅仅通过指定一个方法组——允许C#推断出ThreadStart委托
+            <img src="image/example14.png"/>
+            <br>
+            其他捷径是用lambda表达式或匿名方法:
+            <img src="image/example15.png"/>
+            <br>
 
+            <div class="sub_subtitle">
+                给线程传参
+            </div>
+            最简单的方式就是传参给一个线程的目标方法去执行lambda表达式，然后调用这个方法和待执行的参数
+            <br>
+            <img src="image/example16.png"/>
+            <br>
+            用这种方法，你可以传任意数量个参数。你甚至可以把整个表达式放到一个多声明lambda表达式中:
+            <br>
+            <img src="image/example17.png"/>
+            <br>
+            你可以轻松做到同样的事情用C#2.0匿名方法:
+            <br>
+            <img src="image/example18.png"/>
+            <br>
+            其他方法是传参给Thread的Start方法:
+            <div class="footer">© 2006-2010 Joseph Albahari, O’Reilly Media, Inc. All rights reserved. <a
+                    href="http://www.albahari.com/threading">www.albahari.com/threading/</a>
+
+                <div class="footer_num">6</div>
+            </div>
+        </div>
+    </div>
+    <div class="part">
+        <div class="content">
+            <img src="image/example19.png"/>
+            <br>
+            这个可行是因为Thread的构造器被重载的接受俩个委托的一个：
+            <br>
+            <img src="image/example20.png"/>
+            <br>
+            ParameterizedThreadStart的限制是仅仅接受一个参数。并且因为它的类型是object,参数通常需要装箱拆箱。
+            <br>
+            <b>Lambda表达式和捕获变量</b>
+            <br>
+            就像我们看到的，一个lambda表达式是最强有力的传参方式。当然，你必须要小心在线程开始执行之后意外的修改了捕获变量，因为这些变量是共享的。举例来说，思考下面的例子:
+            <img src="image/example21.png"/>
+            <br>
+            输出是不确定的!这有个常规结果:
+            <br>
+            <img src="image/example22.png"/>
+            <br>
+            问题就在于i变量引用了相同的内存地址在循环的生命周期中，所以，每个线程调用了Console.Write方法包含着一个变量并且变量的值在方法的执行中可能会改变！
+            <div class="content_inside_frame">
+                这里是一个相似的问题我们也描述过在NutShell的第八章的C#4.0的“捕获变量”。这个问题和多线程联系不大，更多的是和C#的捕获变量的规则有关(在for和foreach有些不合理的东西存在)
+            </div>
+            解决办法用一个临时变量像如下的:
+            <br>
+            <img src="image/example23.png"/>
+            <br>
+            临时变量现在关联到每个循环中了，所以，每个线程捕获到了一个不同的内存地址，问题解决了。我们可以阐明这个问题用下面例子中更简单的代码:
+            <br>
+            <img src="image/example24.png"/>
+            <br>
+            因为俩个表达式都捕获到了同一个文本变量,t2被打印了俩此:
+            <br>
+            <img src="image/example25.png"/>
+            <br>
+            <div class="footer">© 2006-2010 Joseph Albahari, O’Reilly Media, Inc. All rights reserved. <a
+                    href="http://www.albahari.com/threading">www.albahari.com/threading/</a>
+
+                <div class="footer_num">7</div>
+            </div>
+        </div>
+        </div>
+    </div>
 </div>
 
 </body>
