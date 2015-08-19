@@ -96,6 +96,10 @@
             color: #008080;
             font-weight: bold;
         }
+        ul{
+            list-style: inherit;
+            margin-left:46px;
+        }
     </style>
 </head>
 <body>
@@ -363,12 +367,46 @@
             <br>
             <img src="image/example25.png"/>
             <br>
+
             <div class="footer">© 2006-2010 Joseph Albahari, O’Reilly Media, Inc. All rights reserved. <a
                     href="http://www.albahari.com/threading">www.albahari.com/threading/</a>
 
                 <div class="footer_num">7</div>
             </div>
         </div>
+    </div>
+    <div class="part" style="height: 1200px;">
+        <div class="content">
+            <br>
+            <div class="sub_subtitle">命名线程</div>
+            每个线程有Name属性供你设置，它对我们调试有好处。这尤其在Visual Studio中有用，因为线程的名字可以被显示在线程窗口和调试工具栏。你仅可以设置一个名字一次，当再修改时会抛出异常。
+            <br>
+            这个静态的Thread.CurrentThread属性会给你当前执行的线程。在下面的例子中，我们可以设置主线程的名字:
+            <br>
+            <img src="image/example26.png"/>
+            <div class="sub_subtitle">前台和后台线程</div>
+            默认，你明确的创建的线程都是前台线程。前台线程保持应用开启只要其中有一个线程在运行，然而后台线程不是这样的。一旦所有前台线程执行完毕，应用结束，任何后台线程会被硬生生的中断。
+            <div class="content_inside_frame">
+                一个线程的前台后台状态和他的优先级或执行时间的分配无关系。
+            </div>
+            你可以查询或改变一个线程的后台状态用他的IsBackground属性。这有个例子:
+            <br>
+            <img src="image/example27.png"/>
+            <br>
+            如果这个程序是无参调用的，这个工作线程假定为后台状态并且将会等待ReadLine声明也就是用户按下Enter。同时，主线程退出，但是这个应用仍然保持运行因为一个前台线程仍然在运行。
+            <br>
+          另一方面，如果一个参数被传递到了Main()里，工作被分配到了后台线程，并且项目几乎随着主线程的结束而立刻退出（使ReadLine终止）。
+            <br>
+            当一个进程通过这种方式结束，任何后台线程执行堆栈的finally区域会被绕行。这是一个问题如果你的程序中finally(或using)区是用来执行清理工作例如释放资源或删除临时文件。为了避免这样，当退出一个应用程序时你可以明确的等待后台线程的结束。有俩种办法可以实现它:
+            <ul>
+                <li>如果是你自己创建的线程，调用Join方法</li>
+                <li>如果是在线程池上，用一个等待处理事件</li>
+            </ul>
+            <div class="footer">© 2006-2010 Joseph Albahari, O’Reilly Media, Inc. All rights reserved. <a
+                    href="http://www.albahari.com/threading">www.albahari.com/threading/</a>
+
+                <div class="footer_num">8</div>
+            </div>
         </div>
     </div>
 </div>
