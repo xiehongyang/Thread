@@ -96,6 +96,11 @@
             color: #008080;
             font-weight: bold;
         }
+
+        ul {
+            list-style: inherit;
+            margin-left: 46px;
+        }
     </style>
 </head>
 <body>
@@ -363,12 +368,207 @@
             <br>
             <img src="image/example25.png"/>
             <br>
+
             <div class="footer">© 2006-2010 Joseph Albahari, O’Reilly Media, Inc. All rights reserved. <a
                     href="http://www.albahari.com/threading">www.albahari.com/threading/</a>
 
                 <div class="footer_num">7</div>
             </div>
         </div>
+    </div>
+    <div class="part" style="height: 1200px;">
+        <div class="content">
+            <br>
+
+            <div class="sub_subtitle">命名线程</div>
+            每个线程有Name属性供你设置，它对我们调试有好处。这尤其在Visual Studio中有用，因为线程的名字可以被显示在线程窗口和调试工具栏。你仅可以设置一个名字一次，当再修改时会抛出异常。
+            <br>
+            这个静态的Thread.CurrentThread属性会给你当前执行的线程。在下面的例子中，我们可以设置主线程的名字:
+            <br>
+            <img src="image/example26.png"/>
+
+            <div class="sub_subtitle">前台和后台线程</div>
+            默认，你明确的创建的线程都是前台线程。前台线程保持应用开启只要其中有一个线程在运行，然而后台线程不是这样的。一旦所有前台线程执行完毕，应用结束，任何后台线程会被硬生生的中断。
+            <div class="content_inside_frame">
+                一个线程的前台后台状态和他的优先级或执行时间的分配无关系。
+            </div>
+            你可以查询或改变一个线程的后台状态用他的IsBackground属性。这有个例子:
+            <br>
+            <img src="image/example27.png"/>
+            <br>
+            如果这个程序是无参调用的，这个工作线程假定为后台状态并且将会等待ReadLine声明也就是用户按下Enter。同时，主线程退出，但是这个应用仍然保持运行因为一个前台线程仍然在运行。
+            <br>
+            另一方面，如果一个参数被传递到了Main()里，工作被分配到了后台线程，并且项目几乎随着主线程的结束而立刻退出（使ReadLine终止）。
+            <br>
+            当一个进程通过这种方式结束，任何后台线程执行堆栈的finally区域会被绕行。这是一个问题如果你的程序中finally(或using)区是用来执行清理工作例如释放资源或删除临时文件。为了避免这样，当退出一个应用程序时你可以明确的等待后台线程的结束。有俩种办法可以实现它:
+            <ul>
+                <li>如果是你自己创建的线程，调用Join方法</li>
+                <li>如果是在线程池上，用一个等待处理事件</li>
+            </ul>
+            <div class="footer">© 2006-2010 Joseph Albahari, O’Reilly Media, Inc. All rights reserved. <a
+                    href="http://www.albahari.com/threading">www.albahari.com/threading/</a>
+
+                <div class="footer_num">8</div>
+            </div>
+        </div>
+    </div>
+    <div class="part" style="height: 1200px;">
+        <div class="content">
+            无论哪种方法，你应该指定一个时间间隔，这样你可以丢掉一个脱离的并且因为某种原因拒绝完成执行的线程。这是你的以防万一的策略:最后，你希望你的应用关闭并且用户不需要借住任务管理器！
+            <br>
+            前台线程不需要这等待遇，但是你一定要小心防止bug可能造成线程不会执行结束。通常是因为应用没有被正确的关闭导致出现活动的前台线程。
+            <br>
+            <br>
+
+            <div class="content_inside_frame">
+                如果一个用户用任务管理器强制结束一个.NET进程，导致所有线程挂掉，即使他们是后台线程。这是被观察到的而不是记录行为，并且它可能随着CLR和操作系统的版本不同而不同。
+            </div>
+            <div class="sub_subtitle">线程优先级</div>
+            一个线程的Priority属性确定了，在系统中，他的相对于其他活动线程的执行时间，有以下几个比率:
+            <img src="image/example28.png"/>
+            <br>
+            这只和多线程在同步运行时有关。
+            <div class="content_inside_sec_frame">
+                在提升一个线程的优先级前应仔细考虑——他可能导致其他线程资源匮乏等问题。
+            </div>
+            提升一个线程的优先级不会提升它实时工作的性能，因为他仍然被应用的进程优先级限制。去完成实时工作，你必须用System.Diagnostics的Process类来提升进程的优先级(我们没有告诉你如何做):
+            <br>
+            <img src="image/example29.png"/>
+            <br>
+            <i>ProcessPriorityClass.High实际还低于最高优先级:Realtime有关。设置一个进程优先级为Realtime通知系统你想让这个进程获得足够的CPU时间</i>。如果你的程序偶然的进入了一个无限循环，你可以会发现甚至整个操作系统会被锁住，除了关机键其他都不能拯救你！为此，High经常是实时应用最好的选择。
+            <div class="content_inside_sec_frame">
+                如果你的实时应用有个用户界面，提升进程优先级会给屏幕更新过多的CPU时间，降低整个计算机的速度(尤其是如果UI很复杂的时候)。降低主线程的优先级连同提升进程的优先级确保实时线程不会先被屏幕重画占用，但是没有解决其他运用匮乏的CPU时间的问题，总体来说是因为操作系统仍旧会分配不成比例的资源给进程。一个最理想的解决方案是把实时工作和用户界面分开作为不同的应用跑在不同的进程应用中并分配不同的优先级，双方通过远程处理和内存映射文件来交流。内存映射文件理想的适合此任务。我们会解释他们如何工作的在Nutshell的C#4.0的14到25章节。
+            </div>
+            甚至提升了进程的优先级，处理复杂实时请求在管理环境中的适用性仍旧有限制。除了垃圾自动回收采集器的延期问题，操作系统可能会出现额外的挑战——甚至是未托管的应用——最好的解决办法是采用专用的硬件或者专业的实时平台。
+            <div class="sub_subtitle">异常处理</div>
+            任何线程的try/catch/finally代码区在范围内被无关的线程开始执行，考虑下面的程序：
+            <div class="footer">© 2006-2010 Joseph Albahari, O’Reilly Media, Inc. All rights reserved. <a
+                    href="http://www.albahari.com/threading">www.albahari.com/threading/</a>
+
+                <div class="footer_num">9</div>
+            </div>
+        </div>
+    </div>
+    <div class="part">
+        <div class="content">
+            <img src="image/example30.png"/>
+            <br>
+            try/catch声明语句在例子中是不起作用的，并且新被创造出来的线程会被未处理的NullReferenceExecption阻碍。当你考虑为每个线程设置一个独立的执行路径时，这种行为才有意义。
+            <br>
+            补救措施是将异常处理移到Go方法中:
+            <br>
+            <img src="image/example31.png"/>
+            <br>
+            你需要一个异常处理在所有线程的生产应用的方法的入口——就像你在主线程做的一样(通常处于一个高级别在执行栈上)。一个未处理的异常会导致整个应用的关闭！和一个丑陋的对话框！
+            <div class="content_inside_frame">
+                在写类似异常处理区，你很少会忽略的错误:通常，你把异常的信息记录下来，同时大多会出现一个提示框允许用户自动的提交那些细节到你的网络服务器上。然后你可能会关掉应用——因为有可能错误会破坏程序的稳定。然而，代价就是用户会失去他手头的工作——例如，打开文档。
+            </div>
+            <br>
+
+            <div class="content_inside_sec_frame">
+                “全局”异常捕获事件如WPF和Windows
+                Forms应用(Application.DispatcherUnhandledException和Application.ThreadException)仅仅是为了在主UI线程中抛出异常。你仍旧必须在工作线程中手动处理异常。
+                <br>
+                AppDomain.CurrentDomain.UnhandledException会在任何未处理的异常被启动，但是没有提供在被关掉之后阻止应用的方法。
+            </div>
+            那是，然而,一些异常你不需要去处理，因为.NET框架会为你处理。这里是即将来临的方法：
+            <div class="footer">© 2006-2010 Joseph Albahari, O’Reilly Media, Inc. All rights reserved. <a
+                    href="http://www.albahari.com/threading">www.albahari.com/threading/</a>
+
+                <div class="footer_num">10</div>
+            </div>
+        </div>
+    </div>
+    <div class="part" style="height:1200px;">
+        <div class="content">
+            <ul>
+                <li>Asynchronous delegates</li>
+                <li>BackgroundWorker</li>
+                <li>The Task Parallel Library(conditions apply)</li>
+            </ul>
+        </div>
+        <div class="subtitle">
+            <h2>线程池</h2>
+        </div>
+        <div class="content">
+            每当你开启一个线程，就会有几百微秒花费在组织如刷新私有变量堆栈上。每一个线程也会消耗(默认)大约1MB内存。线程池会通过分享和循环线程削减这些开支，允许多线程应用到一个非常颗粒化的级别从而没有性能损耗。这是有用的当借用多核进程去并行执行计算集中代码从而运用了“分而治之”思想。
+            线程池也限制了同时运行的工作线程的总数。太多活动线程会压制操作系统，使行政负担和CPU缓存无效。一旦到达极限，工作队列排队等候并且当其他完成时才开始。这使得随意的并发应用出现可能，比如一个网络服务器(<i>异步方法模式</i>是一个把线程池的高效运用的更远的高级技巧;我们将在Nutshell的C#4.0的23章描述它)。
+            这是几种进入线程池的方法:
+            <ul>
+                <li>
+                    通过Task Parallel Library(来自Framework 4.0)
+                </li>
+                <li>
+                    通过调用ThreadPool.QueueUserWorkItem
+                </li>
+                <li>
+                    通过异步托管
+                </li>
+                <li>
+                    通过BackgroundWorker
+                </li>
+            </ul>
+            <div class="content_inside_frame">
+                一下几个构造器间接使用了线程池：
+                <ul>
+                    <li>
+                        WCF,Remoting,ASP.NET和ASMX Web Services应用服务
+                    </li>
+                    <li>
+                        System.Timers.Timer和System.Threading.Timer
+                    </li>
+                    <li>框架方法以Async结束,例如那些在WebClient(异步基于时间的模式)和许多BeginXXX方法(异步模型的模式)</li>
+                    <li>
+                        PLIQ
+                    </li>
+                </ul>
+            </div>
+            Task Parallel Library(TPL)和PLNQ是十分强大的和高级别的，你想要用他们去帮助多线程甚至当线程池不重要时。我们会在第五章讨论细节；现在，我们将简要的看看如何用Task类作为一个运行委托的方法在线程池中。
+            <div class="content_inside_frame">
+                当用线程池时有几件事需要注意:
+                <ul>
+                    <li>你不能设置线程池的Name,调试会更难(尽管在Visual Studio的线程窗口调试时你可以附加一个描述)</li>
+                    <li>线程池永远是后台线程(这通常不是问题)</li>
+                    <li>锁住一个线程池可能引发额外的暗礁在应用的早期除非你调用ThreadPool.SetMinThreads(见优化线程池)</li>
+                    你尽管改变线程池的优先级——他会被重置为normal当被释放回池时。
+                </ul>
+            </div>
+            如果你最近在线程池上执行过你可以通过属性查询:
+            <br>
+            Thread.CurrentThread.IsThreadPoolThread.
+            <div class="footer">© 2006-2010 Joseph Albahari, O’Reilly Media, Inc. All rights reserved. <a
+                    href="http://www.albahari.com/threading">www.albahari.com/threading/</a>
+
+                <div class="footer_num">11</div>
+            </div>
+        </div>
+
+    </div>
+    <div class="part">
+        <div class="content">
+            <br>
+            <div class="sub_subtitle">通过TPL进入线程池</div>
+            你可以用Task Parallel Library的Task类轻松进入线程池。Task类由Framework4.0引进：如果你熟悉老的构造器，可以考虑将Task类替换为ThreadPool.QueueUserWorkItem，同时，泛型Task&lt;TResult&gt;替换为异步的托管。新的构造器更快，更便捷，同时更轻便。
+            为了使用未泛型的Task类，调用Task.Factory.StartNew，进入目标方法的托管:
+            <br>
+            <img src="image/example32.png"/>
+            <br>
+            Task.Factory.StartNew返回一个Task对象，你可以用来监视任务——例如，你可以等待它的完成通过调用wait方法。
+            <div class="content_inside_frame">
+                任何未处理的异常会方便的重新扔到主线程当你调用task的方法时。(如果你不调用Wait和放弃任务，一个未处理的异常会中断进程就像中断一个普通的线程一样)
+            </div>
+            泛型Task&lt;TResult&gt;类是非线性Task类的子类。它让完成执行的任务返回一个值。在下面的例子中，我们通过使用Task&lt;TResult&gt;下载了一个页面。
+            <br>
+            <img src="image/example33.png"/>
+            <br>
+            （&lt;string&gt;类型参数是清晰的黑体字:如果我们省略它，它可能需要被推测出来）
+            当你查询任务的Result属性时，任何未被处理的异常会被自动的被扔掉，到一个AggregateException中。然而，如果你查询Result属性失败的话(也不调用wait方法)，任何未处理的异常会导致进程中断。
+            Task Parallel Libary有许多新特色，并且适合于多核处理器。我们会在第五章会再次展开关于TPL的讨论。
+            <div class="footer">© 2006-2010 Joseph Albahari, O’Reilly Media, Inc. All rights reserved. <a
+                    href="http://www.albahari.com/threading">www.albahari.com/threading/</a>
+
+                <div class="footer_num">12</div>
+            </div>
         </div>
     </div>
 </div>
