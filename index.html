@@ -91,6 +91,23 @@
             padding-left: 11px;
         }
 
+        .content_inside_thr_frame {
+            border: 2px solid #5F497A;
+            margin-top: 11px;
+            width: 722px;
+        }
+
+        .content_inside_thr_frame h2 {
+            color: #5F497A;
+            margin-left: 200px;
+            margin-top: 11px;
+        }
+
+        .content_inside_thr_frame .content {
+            margin-left: 11px;
+            margin-top: 11px;
+        }
+
         .sub_subtitle {
             font-size: x-large;
             color: #008080;
@@ -99,6 +116,11 @@
 
         ul {
             list-style: inherit;
+            margin-left: 46px;
+        }
+
+        ol {
+            list-style: number;
             margin-left: 46px;
         }
     </style>
@@ -523,7 +545,8 @@
                     </li>
                 </ul>
             </div>
-            Task Parallel Library(TPL)和PLNQ是十分强大的和高级别的，你想要用他们去帮助多线程甚至当线程池不重要时。我们会在第五章讨论细节；现在，我们将简要的看看如何用Task类作为一个运行委托的方法在线程池中。
+            Task Parallel
+            Library(TPL)和PLNQ是十分强大的和高级别的，你想要用他们去帮助多线程甚至当线程池不重要时。我们会在第五章讨论细节；现在，我们将简要的看看如何用Task类作为一个运行委托的方法在线程池中。
             <div class="content_inside_frame">
                 当用线程池时有几件事需要注意:
                 <ul>
@@ -547,8 +570,10 @@
     <div class="part">
         <div class="content">
             <br>
+
             <div class="sub_subtitle">通过TPL进入线程池</div>
-            你可以用Task Parallel Library的Task类轻松进入线程池。Task类由Framework4.0引进：如果你熟悉老的构造器，可以考虑将Task类替换为ThreadPool.QueueUserWorkItem，同时，泛型Task&lt;TResult&gt;替换为异步的托管。新的构造器更快，更便捷，同时更轻便。
+            你可以用Task Parallel
+            Library的Task类轻松进入线程池。Task类由Framework4.0引进：如果你熟悉老的构造器，可以考虑将Task类替换为ThreadPool.QueueUserWorkItem，同时，泛型Task&lt;TResult&gt;替换为异步的托管。新的构造器更快，更便捷，同时更轻便。
             为了使用未泛型的Task类，调用Task.Factory.StartNew，进入目标方法的托管:
             <br>
             <img src="image/example32.png"/>
@@ -562,12 +587,125 @@
             <img src="image/example33.png"/>
             <br>
             （&lt;string&gt;类型参数是清晰的黑体字:如果我们省略它，它可能需要被推测出来）
-            当你查询任务的Result属性时，任何未被处理的异常会被自动的被扔掉，到一个AggregateException中。然而，如果你查询Result属性失败的话(也不调用wait方法)，任何未处理的异常会导致进程中断。
+            当你查询任务的Result属性时，任何未被
+            处理的异常会被自动的被扔掉，到一个AggregateException中。然而，如果你查询Result属性失败的话(也不调用wait方法)，任何未处理的异常会导致进程中断。
             Task Parallel Libary有许多新特色，并且适合于多核处理器。我们会在第五章会再次展开关于TPL的讨论。
             <div class="footer">© 2006-2010 Joseph Albahari, O’Reilly Media, Inc. All rights reserved. <a
                     href="http://www.albahari.com/threading">www.albahari.com/threading/</a>
 
                 <div class="footer_num">12</div>
+            </div>
+        </div>
+    </div>
+    <div class="part" style="height:1200px;">
+        <div class="content">
+            <br>
+
+            <div class="sub_subtitle">不通过TPL进入线程池</div>
+            如果你使用的是早期.NET版本框架(4.0之前)，你就不能用Task Parallel
+            Library。取而代之的，你必须用旧构造器的其中之一:ThreadPool.QueueUserWorkItem和异步委托，二者不同在于异步委托让你返回数据给线程。异步委托也能将任何异常整理后返还给调用者。
+            <br>
+            <b>QueueUserWorkItem</b>
+            <br>
+            为了展示QueueUserWorkItem的用法,简单的调用这个方法和委托来在线程池上运行
+            <br>
+            <img src="image/example34.png"/>
+            <br>
+            我们的目标方法，Go，必须接收一个单一object参数（为了满足WaitCallback参数）。这提供了一个传参的简便方法，仅仅像ParameterizedThreadStart。不像Task，QueueuserWorkItem不会返回一个对象帮助你接着管理执行。同样，你必须明确的在目标代码上处理异常——未处理的异常会使程序崩溃。
+            <br>
+            <b>异步委托</b>
+            <br>
+            ThreadPool.QueueUserWorkItem不会提供一个轻松的机制从一个已经执行的线程取得返回值。异步委托调用（简称异步委托）解决了这个问题，允许任意类型的参数可以通过俩种方法传递。此外，异步委托对于未被处理的异常是非常的方便的，它会把他们重新扔给原来的线程(更确切的说，线程会调用EndInvoke方法)，所以不需要明确的处理。
+            <div class="content_inside_sec_frame">
+                不要被异步委托的异步方法迷惑（方法开始于Begin或End，就像File.BeginRead/File.EndRead）。异步方法表面上允许相同的协议，但是他们仍存在一个很难解决的为题，我们将在Nutshell
+                C#4.0的23章描述它。
+            </div>
+            这里有如何通过异步委托开始一个工作任务的:
+            <ol>
+                <li>实例化一个委托锁定你要同步运行的方法(通常是其中预先定义好的Func委托)</li>
+                <li>在委托上调用BeginInvoke，保留IAsyncResult的返回值.
+                    BeginInvoke会立刻返回给调用者。当线程池运行时你稍后能执行其他活动
+                </li>
+                <li>当你需要结果时，在委托上调用EndInvoke，进入保留的IAsyncResult的对象</li>
+            </ol>
+            在下面的例子中，我们使用了一个异步托管调用去同步的和主线程执行，一个简单的返回字符创长度的方法：
+            <div class="footer">© 2006-2010 Joseph Albahari, O’Reilly Media, Inc. All rights reserved. <a
+                    href="http://www.albahari.com/threading">www.albahari.com/threading/</a>
+
+                <div class="footer_num">13</div>
+            </div>
+        </div>
+    </div>
+    <div class="part" style="height: 1200px;">
+        <div class="content">
+            <br>
+            <img src="image/example35.png"/>
+            <br>
+            EndInvoke做了三件事。第一，如果异步委托还没完全执行完它会等待完成执行。第二，它接受返回值(和ref或out参数一样)。第三，它将任何未处理的工作异常丢还给了调用线程。
+            <div class="content_inside_frame">
+                如果异步委托方法没有返回值，你仍然(专门的)需要调用EndInvoke。事实上，这存在争议的可能：并不需要EndInvoke检查管理编译！如果你不选择调用EndInvoke,当然，你需要考虑在工作线程上的异常处理去避免暗礁。
+            </div>
+            当你调用BeginInvoke时你也可以确定一个回调托管——一个方法接受一个IAsyncResult对象不自动的请求完成。这允许调用线程“忘记”关于异步委托，但是他需要在回调结束时一点额外的工作。
+            <br>
+            <img src="image/example36.png"/>
+            <br>
+            最后的争论就是BeginInvoke是一个用户状态对象作为对AsyncState的IAsynvResult特性的填充。他可以包含任何你喜欢的；在这种情况下，我们用它传递方法委托去完成回调，所以我们能在上面调用EndInvoke。
+            <br>
+
+            <div class="sub_subtitle">优化线程池</div>
+            线程池开启一个线程在池中，当任务被分配时，池管理者“注入”新线程去处理额外的同步工作负担，直到到达最大限制。在足够不活动的时期之后，池管理者可能令某个线程“退休”如果他怀疑如此做会提高生产能力的话。
+            你可以设置最大限制线程数通过ThreadPool.SetMaxThreads;默认的是:
+            <ul>
+                <li>1023&nbsp;在Framework4.0的32位环境中</li>
+                <li>32768&nbsp;在Framework4.0的64位环境中</li>
+                <li>250&nbsp;每核在Framework3.5中</li>
+                <li>25&nbsp;每核在Framework2.0中</li>
+            </ul>
+            <div class="footer">© 2006-2010 Joseph Albahari, O’Reilly Media, Inc. All rights reserved. <a
+                    href="http://www.albahari.com/threading">www.albahari.com/threading/</a>
+
+                <div class="footer_num">14</div>
+            </div>
+        </div>
+    </div>
+    <div class="part">
+        <div class="content">
+            （这些数字有可能因为根据操作系统和硬件的变化而不同）。原因是因为确保进程应该锁住一些线程（等待一些条件时空转，就像等待远程电脑的响应）。
+            你仍旧可以通过ThreadPool.SetMinThreads来设置最小限制。最小限制的作用是微妙的:它是一个高级优化技巧，命令池管理者不去延迟线程的分配时间直到到达一个最小限制。当那里有锁住的线程时，提升最小线程的数量提升并发性(见侧边栏)。
+            <div class="content_inside_frame">
+                默认降低限制是一个线程每个处理器核心——最小可根据满载CPU的利用率。在服务环境，通过(像IIS底下的ASP.NET),降低限制通常会出现——多达50或者更多。
+            </div>
+            <div class="content_inside_thr_frame">
+                <h2>最小数量线程如何工作？</h2>
+
+                <div class="content">
+                    提升线程池的最小线程数到x个并不会真的使x个线程立刻被创造出来——线程只根据需求才被创建。当然，如果需要的话，它会立刻命令池管理者创建x个线程。问题是，接下来，为什么线程池有当他需要创建线程的延迟？
+                    答案是为了防止执行时间短的线程的爆发从而造成一个满的线程分配，快速的膨胀在应用内存占用。为了说明这些，考虑一个四核心电脑一次运行一个客户端应用包括40个任务。如果每个任务执行10微秒的计算，整个执行会超过100微秒，假设工作是分给了四个核心。理想上，我们想要40个任务完全的运行在4个线程中:
+                    <ul>
+                        <li>最大的利用了所有四个核心
+                        </li>
+                        <li>最少浪费内存和CPU时间创造不需要的线程</li>
+                    </ul>
+                    这恰好是线程池如何工作的。通过线程数和核心数的匹配允许一个程序保留最小内存占用从而不损耗性能——只要线程有效地利用（这就是线程池的原因）。
+                    <br>
+                    但是现在假设不是运行了10微秒，每个任务需要连接网络，等待半秒同时CPU空转。池管理者的线程节约策略不起作用了。现在创建更多的线程会更好，因为网络查询会同步发生。
+                    <br>
+                    幸运的，池管理者有个备份计划。如果他的队列保持不变超过半秒，它会创建更多的线程响应——在每一个半秒上——取决于线程池的容量。
+                    <br>
+                    半秒延迟是一把双刃剑。一方面它意味着短暂活动一次性的爆发不会使程序突然占用额外的不必要的40MB内存。另一方面，当池中的线程锁住时，它造成了不必要的延迟，像查询数据库或调用WebClient.DownloadFile。为此，你可以告诉池管理者不会延迟分配最先的x个线程，通过调用SetMinThreads，例如:
+                    <br>
+                    ThreadPool.SetMinThreads(50,50);
+                    <br>
+                    (第二个意义表明有多少线程会被分配到I/O完成端口，被APM运用，将在Nutshell的C#4.0第23章描述)。
+                    <br>
+                    默认是一个核心一个线程。
+                    <div class="footer">© 2006-2010 Joseph Albahari, O’Reilly Media, Inc. All rights reserved. <a
+                            href="http://www.albahari.com/threading">www.albahari.com/threading/</a>
+
+                        <div class="footer_num">15</div>
+                    </div>
+                </div>
+                <br>
             </div>
         </div>
     </div>
