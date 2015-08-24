@@ -9,13 +9,21 @@
             background-color: #cccccc;
         }
 
-        .chapter_one {
+        .chapter_all {
             position: absolute;
             left: 30%;
             top: 2%;
             line-height: 33px;
         }
 
+        code {
+            color: #3185DA;
+            font-family: cursive;
+        }
+
+        code ul {
+            list-style: none;
+        }
         h1 {
             font-size: xx-large;
             font-weight: bolder;
@@ -126,7 +134,7 @@
     </style>
 </head>
 <body>
-<div class="chapter_one">
+<div class="chapter_all">
     <div class="part">
         <div class="title">
             <h1>第一部分:开始</h1>
@@ -709,6 +717,127 @@
             </div>
         </div>
     </div>
+    <div class="part" style="height:1400px;">
+        <div class="title">
+            <h1>第二部分:同步的基础</h1></div>
+        <div class="subtitle">
+            <h2>并发的基本点</h2>
+        </div>
+        <div class="content">
+            到目前为止，我们已经描述过了如何在线程上开启一个任务，配置一个线程，和在俩个路径中传参。我们也描述了本地变量如何接近线程并且如何被线程共享，允许他们之间通过公有域交流。
+            <br>
+            下一步是同步:为可预见的结果调整线程的动作。当多个线程访问了同一数据时，同步是格外重要的。同时这块区域是惊人的容易触礁的。
+            <br>
+            同步机制可以被分成四个类型:
+            <br>
+            <b>
+                简单阻塞方法
+            </b>
+            <ul>
+                <li>
+
+                    这些是等待其他线程完成或一段时间消失。<code>Sleep</code>,<code>Join</code>和<code>Task.Wait</code>都是简单阻塞方法。
+                </li>
+            </ul>
+            <br>
+            <b>锁构造器</b>
+            <br>
+            <ul>
+                <li>
+                    这些限制了线程的数量可以执行一些活动或挨个执行一片段的代码。排它锁构造器是非常常见的——这些只允许一次有有一个线程，并且允许线程为了访问公共数据而竞争，从而没有互相干扰。标准排它锁构造器有<code>lock(Monitor.Enter/Monitor.Exit),Mutex</code>和<code>SpinLock</code>。不排它锁构造器有<code>Semaphore</code>,<code>SemaphoreSlim</code>和reader/writer锁。
+                </li>
+            </ul>
+            <br>
+            <b>信号构造器</b>
+            <br>
+            <ul>
+                <li>
+                    这些允许线程暂停直到从其他地方接受到一个消息，避免低效的轮询。这里是俩个常见的用来发信号的设备:事件等待机制和<code>Monitor's
+                    Wait/Pulse</code>方法。Framework4.0引进了<code>CountdownEvent</code>和<code>Barrier</code>类。
+                    <b>不阻塞同步构造器</b>
+                    这些可以保护访问公共域通过调用处理器基本方法。CLR和C#提供了以下几个不阻塞构造器:<code>Thread.MemoryBarrier,Thread.VolatileRead,Thread.VolatileWrite</code>,<code>volatile</code>关键字,和<code>Interlocked</code>类。
+                </li>
+            </ul>
+            <br>
+            阻塞是以上概念的基本。让我们简洁的介绍它。
+            <br>
+
+            <div class="sub_subtitle">阻塞</div>
+            一个线程执行时因为某种原因而暂停了被认为是阻塞，诸如当<code>Sleeping</code>或者等待其他线程结束通过<code>Join</code>或者<code>EndInvoke</code>。一个被锁住的线程立刻放弃处理器时间片，并且从那时起，不再消耗处理器时间直到阻塞条件被满足。你可以测试一个被锁住的线程通过它的<code>ThreadState</code>属性:
+            <br>
+            <code>bool blocked=(someThread.ThreadState&ThreadState.WaitSleepJoin)!=0</code>
+            <br>
+            (赋予一个线程状态可能会在测试它状态和将这个信息作用于线程之间的时候改变，这段代码仅仅在调试代码时起作用)
+            <br>
+            当一个线程阻塞或者未阻塞，操作系统执行一个环境转化。这引发了几微秒的时间消耗。
+            <br>
+            未阻塞发生于以下四种情况的一种（电脑关机键不算！）
+            <ul>
+                <li>通过阻塞条件被满足</li>
+                <li>通过操作超时(如果超时是指定的)</li>
+            </ul>
+            <div class="footer">© 2006-2010 Joseph Albahari, O’Reilly Media, Inc. All rights reserved. <a
+                    href="http://www.albahari.com/threading">www.albahari.com/threading/</a>
+
+                <div class="footer_num">16</div>
+            </div>
+        </div>
+    </div>
+    <div class="part" style="height:1400px;">
+        <div class="content">
+            <ul>
+                <li>通过被Thread Interrupt中断</li>
+                <li>通过被Thread Abort放弃</li>
+            </ul>
+            一个线程当它的执行通过Suspend(不赞成)方法。
+            <div class="sub_subtitle">阻塞VS旋转</div>
+            有时一个线程必须停止直到某个条件满足，单个的和锁住的构造器高效的完成它通过阻塞直到一个条件被满足。然而，有一个简单的替换:一个线程可以等待一个条件通过spinning在轮询环中。例如:
+            <code>
+            <ul>
+                <li>
+                    while(!proceed);
+                </li>
+            </ul>
+            </code>
+            或者:
+            <code>
+            <ul>
+                <li>
+                    while(DateTime.Now&lt;nextStartTime);
+                </li>
+            </ul>
+            </code>
+            通常，这是非常浪费处理器时间的：对于CLR和操作系统来说，线程执行了重要的操作，并且因此被分配资源！
+            <br>
+            有时会混合用blocking和spinning:
+            <code>
+            <ul>
+                <li>
+                    while(!proceed) Thread.Sleep(10);
+                </li>
+            </ul>
+            </code>
+            虽然生硬，这是（通常）比全部spinning高效的多。尽管问题会升起，因为并发事件在<code>proceed</code>标志上。适当的单一的和锁住的可以避免这个。
+            <div class="content_inside_frame">
+                Spinning暂时的很高效当你期待的条件被很快满足时(例如在几微秒之内)因为他防止了环境转换的消耗和延迟。.NET架构提供了特殊方法和类帮助你——"SpinLock和SpinWait"。
+            </div>
+            <div class="sub_subtitle">线程状态</div>
+            你可以查询一个线程的执行状态通过他的<code>ThreadState</code>属性。这返回一个<code>ThreadState</code>的枚举标签，它结合了3个面板到同一个bitwise fashion。最值得的，然而，是多余的，没用的，或者不赞同的。接下来图标战士的一个"layer":
+            <br>
+            <img src="image/example37.png">
+            <br>
+            接下里的代码去掉了一个<code>ThreadState</code>变成了4个最有用的值：<code>Unstarted,Running,WaitSleepJoin</code>和<code>Stopped</code>:
+            <br>
+            <img src="image/example38.png">
+            <br>
+            <div class="footer">© 2006-2010 Joseph Albahari, O’Reilly Media, Inc. All rights reserved. <a
+                    href="http://www.albahari.com/threading">www.albahari.com/threading/</a>
+
+                <div class="footer_num">17</div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 </body>
