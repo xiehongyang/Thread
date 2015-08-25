@@ -24,6 +24,7 @@
         code ul {
             list-style: none;
         }
+
         h1 {
             font-size: xx-large;
             font-weight: bolder;
@@ -55,7 +56,7 @@
         .part {
             background-color: white;
             width: 820px;
-            height: 1145px;
+            height: 1250px;
             box-shadow: 0 0 1px #000;
             padding-top: 8px;
         }
@@ -793,36 +794,37 @@
             <div class="sub_subtitle">阻塞VS旋转</div>
             有时一个线程必须停止直到某个条件满足，单个的和锁住的构造器高效的完成它通过阻塞直到一个条件被满足。然而，有一个简单的替换:一个线程可以等待一个条件通过spinning在轮询环中。例如:
             <code>
-            <ul>
-                <li>
-                    while(!proceed);
-                </li>
-            </ul>
+                <ul>
+                    <li>
+                        while(!proceed);
+                    </li>
+                </ul>
             </code>
             或者:
             <code>
-            <ul>
-                <li>
-                    while(DateTime.Now&lt;nextStartTime);
-                </li>
-            </ul>
+                <ul>
+                    <li>
+                        while(DateTime.Now&lt;nextStartTime);
+                    </li>
+                </ul>
             </code>
             通常，这是非常浪费处理器时间的：对于CLR和操作系统来说，线程执行了重要的操作，并且因此被分配资源！
             <br>
             有时会混合用blocking和spinning:
             <code>
-            <ul>
-                <li>
-                    while(!proceed) Thread.Sleep(10);
-                </li>
-            </ul>
+                <ul>
+                    <li>
+                        while(!proceed) Thread.Sleep(10);
+                    </li>
+                </ul>
             </code>
             虽然生硬，这是（通常）比全部spinning高效的多。尽管问题会升起，因为并发事件在<code>proceed</code>标志上。适当的单一的和锁住的可以避免这个。
             <div class="content_inside_frame">
                 Spinning暂时的很高效当你期待的条件被很快满足时(例如在几微秒之内)因为他防止了环境转换的消耗和延迟。.NET架构提供了特殊方法和类帮助你——"SpinLock和SpinWait"。
             </div>
             <div class="sub_subtitle">线程状态</div>
-            你可以查询一个线程的执行状态通过他的<code>ThreadState</code>属性。这返回一个<code>ThreadState</code>的枚举标签，它结合了3个面板到同一个bitwise fashion。最值得的，然而，是多余的，没用的，或者不赞同的。接下来图标战士的一个"layer":
+            你可以查询一个线程的执行状态通过他的<code>ThreadState</code>属性。这返回一个<code>ThreadState</code>的枚举标签，它结合了3个面板到同一个bitwise
+            fashion。最值得的，然而，是多余的，没用的，或者不赞同的。接下来图标战士的一个"layer":
             <br>
             <img src="image/example37.png">
             <br>
@@ -830,6 +832,7 @@
             <br>
             <img src="image/example38.png">
             <br>
+
             <div class="footer">© 2006-2010 Joseph Albahari, O’Reilly Media, Inc. All rights reserved. <a
                     href="http://www.albahari.com/threading">www.albahari.com/threading/</a>
 
@@ -837,7 +840,204 @@
             </div>
         </div>
     </div>
+    <div class="part" style="height:1400px;">
+        <div class="content">
+            <code>ThreadState</code>属性是对于调试结果是非常有用的，因为一个线程的状态可能会改变在测试<code>ThreadState</code>和信息起作用的时候。
+        </div>
+        <div class="subtitle">
+            <h2>锁</h2>
+        </div>
+        <div class="content">
+            排它锁用来确认一次只能有一个线程可以进入指定的代码区域。俩个主排它锁构造器是lock和Mutex。俩者之中，lock构造器更加的快速和简便。可是，Mutex可以在不同的进程和计算机跨程序的运用。
+            <br>
+            在这部分，我们开始于lock构造器并且转向Mutex和信号(对于非排他锁)。之后，我们看reader/writer锁。
+            <div class="content_inside_frame">
+                从Framework4.0,也有一个SpinLock为高并发情况构造的SpinLock(见最后一章)。
+            </div>
+            让我们开始于底下这个类:
+            <br>
+            <img src="image/example39.png"/>
+            <br>
+            这个类不是安全线程:如果Go被俩个线程同时调用，可能会出现除以零的错误，因为_val2可能被设置为零在一个线程正好其他线程执行了if和Console.WriteLine声明语句。
+            <br>
+            这里是lock如何解决这个问题的:
+            <br>
+            <img src="image/example40.png"/>
+            <br>
+            一个线程一次每次只可以锁住一个同时目标(这里,_locker)，并且任何竞争被锁住直到任何锁被释放。如果超过一个线程竞争锁，他们会被排列成“准备队列”并且授予先到的线程锁，先服务原则（一个警告是关于Windows的行为和CLR方法的细微差别，就是关于有时会违反队列的公平）。排它锁有时强制被序列化去访问被锁保护的内容，因为一个线程访问时不能允许其他线程重复访问。就此，我们保护Go方法里的逻辑，也包括字段_val1和_val2。
+            <br>
+            一个线程被锁住当等待一个竞争锁有一个<code>ThreadState</code>和<code>WaitSleepJoin</code>。在中断和终止，我们描述一个锁住的线程如何通过其他线程被强制释放。这是一个公平的重任务技巧可被用于终止一个线程。
+            <div class="footer">© 2006-2010 Joseph Albahari, O’Reilly Media, Inc. All rights reserved. <a
+                    href="http://www.albahari.com/threading">www.albahari.com/threading/</a>
 
+                <div class="footer_num">18</div>
+            </div>
+        </div>
+    </div>
+    <div class="part">
+        <div class="content">
+            <div class="content_inside_thr_frame">
+                <h2>锁构造器的对比</h2>
+                <br>
+                <img src="image/example41.png">
+                <br>
+                <ul style="list-style: none;">
+                    <li>
+                        *加速和解锁的时间取值来自同一个线程(假设没有阻塞)，并且在Intel 酷睿i7 860上测试。
+                    </li>
+                </ul>
+            </div>
+            <br>
+
+            <div class="sub_subtitle">Monitor.Enter和Monitor.Exit</div>
+
+            C#的<code>lock</code>声明实际上是<code>Monitor.Enter和Monitor.Exit</code>的简单语法，同时还有个try/finally块。这里有个真实发生在Go方法之前的例子(一个简单版本的):
+            <br>
+            <img src="image/example42.png">
+            <br>
+            调用Monitor.Exit而没有首先调用Monitor.Enter在同一个对象上会抛出异常。
+            <br>
+            <i><b>解锁重载</b></i>
+            <br>
+            如图所示的代码恰好是C# 1.0，2.0和3.0通过<code>lock</code>声明编译产生的。
+            <br>
+            这段代码有一个难以察觉的错误，然而，考虑一下异常在Monitor.Enter的执行和在Monitor.Enter和try语句块之间调用(因为，也许。<code>Abort</code>被在线程上调用——或者一个<code>OutOfMemoryException</code>被抛出)。这种情况，锁可能或者没有被拿走。如果锁被劫持，它将不会被释放——因为我们永远不会进入<code>try/finally</code>语句块。这将会引起一个泄露的锁。
+            <br>
+            为了防止这种危险,ClR 4.0的设计者们添加了一个对于Monitor.Enter如下的重载方法：
+            <br>
+            <code>public static void Enter(object obj,ref bool </code><b>lockTaken</b><code>)</code>;
+            <code>lockTaken</code>为false在这个方法之后如果(当且仅当)Enter方法抛出一个异常并且锁没被取走。
+            <br>
+            这是一个正确的用法(这是实际上是C# 4.0如何转化一个锁机制的)：
+            <br>
+            <img src="image/example43.png">
+            <br>
+
+            <div class="footer">© 2006-2010 Joseph Albahari, O’Reilly Media, Inc. All rights reserved. <a
+                    href="http://www.albahari.com/threading">www.albahari.com/threading/</a>
+
+                <div class="footer_num">19</div>
+            </div>
+        </div>
+    </div>
+    <div class="part">
+        <div class="content">
+            <i><b>TryEnter</b></i>
+            <br>
+            <code>Monitor</code>也提供了一个TryEnter方法允许指定超时时间，微秒或者是TimeSpan。如果获得一个锁方法返回<code>true</code>,或者不包含返回<code>false</code>因为方法超时。<code>TryEnter</code>也可被无参调用，“测试”锁，如果锁没有被立刻包含定时立刻生效。
+            <br>
+            正如<code>Enter</code>方法一样，CLR 4.0重载接受一个<code>lockTaken</code>参数。
+            <br>
+
+            <div class="sub_subtitle">选择同步性对象</div>
+            任何对每个参与线程课件的对象都可被用于同步性对象，仅受限于一条严格规则:它必须是引用类型。同步性对象通常是私有的(因为这可以帮助压缩锁逻辑)和通常是实例或者是静态字段。同步性对象可兼做保护对象，正如_list字段在如下的例子中：
+            <br>
+            <img src="image/example44.png">
+            <br>
+            一个字段致力于锁的结果(比如_locker,在之前的例子)允许在链中和锁的细粒度上进行精准的控制。包含对象(<code>this</code>)——或者甚至它的类型——能被当成一个同步对象:
+            <code>lock(this){...}</code>
+            或者:
+            lock(typeof(Widget)){...} //为了保护访问静态
+            这种方式的锁的缺点就是你不能压缩锁逻辑，所以它变得难于去防止死锁和多余阻塞。一种类型的锁可能也会在应用区界限之间渗漏(在同一个进程之间)。
+            <br>
+            你也可以在本地变量上锁住被lambda表达式或匿名方法捕获到。
+            <div class="content_inside_frame">
+                任何情况下，锁不约束访问同步性对象，<code>x.ToString()</code>不会因为其他线程调用了<code>lock(x)</code>而堵塞。俩个线程都调用<code>lock(x)</code>才会发生堵塞。
+            </div>
+            <div class="sub_subtitle">何时锁</div>
+            一个基本原则，你需要对访问任何公有字段加锁。即使是最简单的情况——一个单个字段的赋值运算符——你必须考虑同步性。在下面的类中，无论是<code>Increment</code>还是<code>Assign</code>方法都不是安全线程:
+            <br>
+            <img src="image/example45.png">
+            <br>
+            这里是<code>Increment</code>和<code>Assign</code>的安全线程版本。
+            <div class="footer">© 2006-2010 Joseph Albahari, O’Reilly Media, Inc. All rights reserved. <a
+                    href="http://www.albahari.com/threading">www.albahari.com/threading/</a>
+
+                <div class="footer_num">19</div>
+            </div>
+        </div>
+    </div>
+    <div class="part">
+        <div class="content">
+            <img src="image/example46.png">
+            <br>
+            在不阻塞同步性程序中，我们会解释如何需要这些，并且内存栈和<code>Interlocked</code>类如何提供替代方案在这种情况下。
+            <div class="sub_subtitle">锁和原子性</div>
+            如果一组变量经常被读和写在同一个锁中，你可以说变量是读和写的原子级。让我们假定字段x和y经常被读和分配在一个<code>lock</code>对象的<code>lock</code>中:
+            <br>
+            <code>lock (locker) { if(x !=0) y /=x; }</code>
+            可以说x和y是被访问原子性，因为代码段不能被分开或被其他线程的动作先占用后改变x或y并且使结果无效。你永远不会得到除零错误，x和y总是被访问在相同额的排它锁中。
+            <br>
+
+            <div class="content_inside_sec_frame">
+                锁提供的原子性是被违反的如果一个异常被抛出在<code>lock</code>块中。例如，考虑以下的:
+                <br>
+                <img src="image/example47.png">
+                <br>
+                如果一个异常被<code>GetBankFee()</code>抛出，银行会损失钱。这种情况下，我们能够避免问题通过调用<code>GetBankFee()</code>早一点。一个解决方案是比较复杂的，通过执行“回滚”逻辑在<code>catch</code>和<code>finally</code>中。
+            </div>
+            说明原子性是不同的，虽然类似的概念:一个指令是原子性的如果它执行的不可分割的优先处理器下(见不阻塞同步性)。
+            <div class="sub_subtitle">嵌套锁</div>
+            一个线程可以被重复的锁住同一个对象在嵌套（可再进入的）型:
+            <br>
+            <img src="image/example48.png">
+            <br>
+            或者
+            <br>
+            <img src="image/example49.png">
+            <br>
+            在这种情况下，对象是未锁住的仅仅当最外面的锁声明离开了——或者一个<code>Monitor.Exit</code>的匹配数字执行了。
+            <br>
+            嵌套锁是有用的当一个方法调用了其他在一个锁中:
+            <div class="footer">© 2006-2010 Joseph Albahari, O’Reilly Media, Inc. All rights reserved. <a
+                    href="http://www.albahari.com/threading">www.albahari.com/threading/</a>
+
+                <div class="footer_num">20</div>
+            </div>
+        </div>
+    </div>
+    <div class="part">
+        <div class="content">
+            <br>
+            <img src="image/example50.png">
+            <br>
+            一个线程可以锁住仅仅是第一个(最外层)锁锁住。
+            <br>
+
+            <div class="sub_subtitle">死锁</div>
+            <br>
+            一个死锁发生在当俩个线程各自等待对方的资源，所以俩者都不能开始。最简单的方法是图示的俩个锁:
+            <br>
+            <img src="image/example51.png">
+            <br>
+            更多错杂的死锁链能被三个或者更多的线程创造。
+            <br>
+
+            <div class="content_inside_sec_frame">
+                CLR,在一个标准托管环境，不像SQL SERVER通过终结其中任何一个错误者从而自动的发现和处理死锁。一个线程死锁造成多个线程无限期的堵塞，除非你确定了了锁的超时。（在SQL
+                CLR集成托管中，然而，死锁会被自动的发现和异常(捕捉到的)会被其中一个线程抛出。）
+            </div>
+            死锁是多线程中最难的问题之一——尤其是有很多互相相关的的对象。基本上，难题就在于你不能确定被锁住的调用者是否被去掉。
+            <br>
+            所以，你可能天真的锁住了私有段<code>a</code>在你的类x中，没有认识到你的调用者(或者调用者的调用者)已经锁住了<code>b</code>在类<code>y</code>中。同时，其他线程做了反转——创造了死锁。讽刺的是，这个问题是被加剧的通过(好)面向对象设计模式，因为像模式创造了调用链是不坚决的直到运行时。
+            <br>
+            普及的建议是"用一致的顺序锁对象来防止死锁"，虽然在第一个例子中有用，很难去应用于描述过的场景。一个更好的策略是谨慎的锁住周边的调用方法在仅仅和自己有关的对象中。还有，考虑无论你真的需要在其他类中锁住周边方法(你经常做——我们稍后会看——但是有时你有其他理由)。更多依靠声明式和数据同步，不变的类型，和无阻塞同步构造器，可以使锁的需求变小。
+            <div class="footer">© 2006-2010 Joseph Albahari, O’Reilly Media, Inc. All rights reserved. <a
+                    href="http://www.albahari.com/threading">www.albahari.com/threading/</a>
+
+                <div class="footer_num">21</div>
+            </div>
+        </div>
+    </div>
+    <div class="part">
+        <div class="content">
+            <div class="content_inside_frame">
+                这里是一个替代方法去发觉错误：当你调用其他代码同时被锁住时，锁细微的泄露。这不是CLR或者.NET框架的错误，但是通常是一个基本的锁的限制。锁的问题就是被不同的研究对象解决，包括<code>Software Transactional Memory。</code>
+            </div>
+            <br>
+            其他死锁情景会出现当<code>Dispatcher.Invoke</code>(在一个WPF应用)或者Control.Invoke(在一个Windows Form 应用中)当占用一个锁时。如果UI碰巧运行在其他方法上等待同一个锁，死锁就恰好会发生。这通常可以被<code>BeginInvoke</code>取代<code>Invoke</code>修复。或者，你可以在调用<code>Invoke</code>之前释放锁，虽然这不管用如果你的调用者丢掉了锁。我们解释了<code>Invoke</code>和<code>BeginInvoke</code>在富客户端应用和线程关系。
+        </div>
+    </div>
 </div>
 
 </body>
