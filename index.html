@@ -1032,10 +1032,60 @@
     <div class="part">
         <div class="content">
             <div class="content_inside_frame">
-                这里是一个替代方法去发觉错误：当你调用其他代码同时被锁住时，锁细微的泄露。这不是CLR或者.NET框架的错误，但是通常是一个基本的锁的限制。锁的问题就是被不同的研究对象解决，包括<code>Software Transactional Memory。</code>
+                这里是一个替代方法去发觉错误：当你调用其他代码同时被锁住时，锁细微的泄露。这不是CLR或者.NET框架的错误，但是通常是一个基本的锁的限制。锁的问题就是被不同的研究对象解决，包括<code>Software
+                Transactional Memory。</code>
             </div>
             <br>
-            其他死锁情景会出现当<code>Dispatcher.Invoke</code>(在一个WPF应用)或者Control.Invoke(在一个Windows Form 应用中)当占用一个锁时。如果UI碰巧运行在其他方法上等待同一个锁，死锁就恰好会发生。这通常可以被<code>BeginInvoke</code>取代<code>Invoke</code>修复。或者，你可以在调用<code>Invoke</code>之前释放锁，虽然这不管用如果你的调用者丢掉了锁。我们解释了<code>Invoke</code>和<code>BeginInvoke</code>在富客户端应用和线程关系。
+            其他死锁情景会出现当<code>Dispatcher.Invoke</code>(在一个WPF应用)或者Control.Invoke(在一个Windows Form
+            应用中)当占用一个锁时。如果UI碰巧运行在其他方法上等待同一个锁，死锁就恰好会发生。这通常可以被<code>BeginInvoke</code>取代<code>Invoke</code>修复。或者，你可以在调用<code>Invoke</code>之前释放锁，虽然这不起作用如果你的调用者丢掉了锁。我们解释了<code>Invoke</code>和<code>BeginInvoke</code>在富客户端应用和线程关系。
+            <div class="sub_subtitle">性能</div>
+            锁很快:你可以预料到获得和释放锁小于20纳秒在2010年的计算机上前提是没有争锁。如果争锁的话，间接的坏境转化造成的移动的开销接近微秒区间。虽然这可能会更长在线程实际重新安排。你可以<code>SpinLock</code>避免环境转换——如果你的锁很简洁(见最后一节)。
+            锁能降低并发性如果锁的时间太长。它也能增加死锁的几率。
+            <div class="sub_subtitle">Mutex</div>
+            <code>Mutex</code>像C#的<code>lock</code>,但是他可以访问多进程。换句话说，<code>Mutex</code>可以计算的范围和应用的范围是一样的。
+            <div class="content_inside_frame">获得和释放一个不争的<code>Mutex</code>会花费几毫秒——大约比lock小50倍。</div>
+            <code>Mutex</code>类，你可以调用<code>WaitOne</code>方法去锁和<code>ReleaseMutex</code>解锁。关闭或者处理一个<code>Mutex</code>自动的释放它。仅仅和<code>lock</code>声明，<code>Mutex</code>能被释放仅仅从相同的线程获得它。
+            <br>
+            一个通常的用法对于跨进程<code>Mutex</code>是确认程序每次只有一个实例。这是它如何工作的:
+            <br>
+            <img src="image/example52.png">
+            <br>
+
+            <div class="footer">© 2006-2010 Joseph Albahari, O’Reilly Media, Inc. All rights reserved. <a
+                    href="http://www.albahari.com/threading">www.albahari.com/threading/</a>
+
+                <div class="footer_num">22</div>
+            </div>
+        </div>
+    </div>
+    <div class="part">
+        <div class="content">
+            <div class="content_inside_frame">
+                如果运行在最终服务之下，计算机范围的<code>Mutex</code>原本只对应用可见在同一个终端服务会话。使它可见对所有终端服务对话，加上前缀名Global\。
+            </div>
+            <div class="sub_subtitle">
+                Semaphore
+            </div>
+            一个信号灯像是一个夜店:它有一个确定的能力，由保镖执行。一旦它满了，任何人不能再进入，并且一个队列在外排起。一会，每个人离开，队列的最前面的人进入。
+            这个构造函数最少需要俩个参数:夜店的地方当前承受数量和总容量。
+            <br>
+            一个信号灯的一个能力是和<code>Mutex</code>或<code>lock</code>是相似的，除了信号灯没有“拥有者”——它的线程不可知论者。任何线程能调用<code>Release</code>在<code>Semaphore</code>上，然而对于<code>Mutex</code>和<code>lock</code>，只有这个包含锁的线程可以释放它。
+            <div class="content_inside_frame">
+                有俩种功能上相同的类版本:<code>Semaphore</code>和<code>SemaphoreSlim</code>.后者是4.0框架引进的，同时优化于满足低延时并发程序的需求。它在多线程条件下也很有用因为它让你确定了一个删除标记当等待时。然而，它不能用于进程间的信号。
+                <br>
+                <code>Semaphore</code>引发了大约1微秒在调用<code>WaitOne</code>或<code>Release</code>。<code>SemaphoreSlim</code>引发了大约4分之1微秒。
+            </div>
+            <code>Semaphore</code>对于限制并发性也是有用的——预防了太多线程每次执行了特定的代码片。在下面的例子中，5个线程师徒进入夜店但是每次只能进3个:
+            <br>
+            <img src="image/example53.png">
+            <br>
+            如果<code>Sleep</code>声明代替了I/O盘的运行，<code>Semaphore</code>会提高全部的性能通过限制过多的并发硬盘活动。
+            一个<code>Semaphore</code>，如果被命名了，可以像<code>Mutex</code>一样跨进程。
+            <div class="footer">© 2006-2010 Joseph Albahari, O’Reilly Media, Inc. All rights reserved. <a
+                    href="http://www.albahari.com/threading">www.albahari.com/threading/</a>
+
+                <div class="footer_num">23</div>
+            </div>
         </div>
     </div>
 </div>
